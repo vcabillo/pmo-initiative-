@@ -968,8 +968,8 @@ fetch("https://script.google.com/macros/s/AKfycbwXu7SI3wMOxwabOWR-X-NfX1hscSaDQ5
 })
 .then(res => res.json())
 .then(data => {
-  console.log("Saved to Google Sheets:", data);
-  alert("Saved successfully!");
+  console.log("Saved:", data);
+  alert("Data saved successfully!");
 })
 .catch(err => {
   console.error("Error saving to Google Sheets:", err);
