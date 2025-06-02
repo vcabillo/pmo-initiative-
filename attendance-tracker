@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GDD PM Attendance sheet</title>
+<style>
+  /* Reset and base styles */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f4f6f8; color: #333;
+  }
+  body {
+    display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+  }
+  header {
+    background: linear-gradient(90deg, #0077ff, #00d4ff);
+    padding: 1rem 2rem;
+    color: white;
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: 1px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  main {
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden;
+    height: calc(100vh - 70px);
+  }
+
+  .sidebar {
+    flex: 0 0 25%;
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    overflow-y: auto;
+  }
+  .employee-header {
+    margin-bottom: 0.5rem;
+  }
+  .employee-header h3 {
+    margin: 0 0 0.5rem 0;
+    color: #0077ff;
+    user-select: none;
+  }
+  #addEmployeeForm {
+    display: flex;
+    margin-bottom: 1rem;
+  }
+  #newEmployeeName {
+    flex-grow: 1;
+    padding: 6px 10px;
+    border: 2px solid #0077ff;
+    border-radius: 5px 0 0 5px;
+    font-size: 14px;
+    outline-offset: 2px;
+  }
+  #addEmployeeBtn {
+    background: #0077ff;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 0 5px 5px 0;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  #addEmployeeBtn:hover { background: #005fcc; }
+
+  #employeeList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+  #employeeList li {
+    padding: 0.45rem 0.5rem;
+    margin-bottom: 0.3rem;
+    background: #e9f0ff;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+  }
+  #employeeList li.selected {
+    background: #0077ff;
+    color: white;
+    font-weight: 600;
+  }
+  .remove-btn {
+    background: transparent;
+    border: none;
+    color: #f44336;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0 6px;
+    user-select: none;
+  }
+  .remove-btn:hover {
+    color: #d32f2f;
+  }
+
+  .palette-container {
+    margin-top: 1rem;
+  }
+  .palette-container h3 {
+    margin-bottom: 0.5rem;
+    color: #00aaff;
+    user-select: none;
+  }
+  /* Make the palettes scrollable with max height */
+  #shiftPalette, #attendancePalette {
+    max-height: 160px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 6px;
+    border-radius: 6px;
+    background-color: #f0f7ff;
+    user-select: none;
+  }
+  .palette-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .color-item {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    min-width: 80px;
+    justify-content: space-between;
+    background-color: #e0f0ff;
+  }
+  .color-item span {
+    flex-grow: 1;
+    margin-left: 8px;
+  }
+  .color-item.selected {
+    border-color: #333;
+    font-weight: 700;
+    background-color: #bbdefb;
+  }
+  .color-box {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    flex-shrink: 0;
+  }
+  .palette-remove-btn {
+    background: transparent;
+    border: none;
+    color: #f44336;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0 6px;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .palette-remove-btn:hover {
+    color: #d32f2f;
+  }
+  .add-item-form {
+    margin-top: 6px;
+    display: flex;
+    gap: 6px;
+  }
+  .add-item-form input[type="text"] {
+    flex-grow: 1;
+    padding: 5px 10px;
+    border: 2px solid #0077ff;
+    border-radius: 5px 0 0 5px;
+    font-size: 14px;
+    outline-offset: 2px;
+  }
+  .add-item-form button {
+    background: #0077ff;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 0 5px 5px 0;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .add-item-form button:hover { background: #005fcc; }
+
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    padding: 1rem;
+  }
+  .week-picker-container {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .export-btn-container {
+    text-align: right;
+    margin-bottom: 8px;
+  }
+  #exportExcelBtn {
+    background-color: #0077ff;
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  #exportExcelBtn:hover { background-color: #005fcc; }
+
+  .schedule {
+    overflow: auto;
+    flex-grow: 1;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+    border-radius: 0 0 12px 12px;
+  }
+  thead {
+    background: linear-gradient(90deg, #00aaff, #0077ff);
+    color: white;
+    user-select: none;
+  }
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: linear-gradient(90deg, #00aaff, #0077ff);
+    color: white;
+}
+  th, td {
+    border: 1px solid #ddd;
+    padding: 6px 8px;
+    font-size: 14px;
+    text-align: center;
+    vertical-align: middle;
+    max-width: 65px;
+    overflow-wrap: break-word;
+    height: 42px;
+  }
+  th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  td:first-child {
+    max-width: 250px;
+    text-align: left;
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 5;
+  }
+  td.shift-cell {
+    cursor: pointer;
+    position: relative;
+  }
+  td.shift-cell:hover {
+    background-color: #e0f7ff;
+  }
+  .attendance-mark {
+    font-weight: 700;
+    color: white;
+    border-radius: 12px;
+    padding: 2px 6px;
+    display: inline-block;
+    user-select: none;
+    margin: 0 2px;
+    font-size: 13px;
+  }
+  footer {
+    background: #0077ff;
+    color: white;
+    text-align: center;
+    padding: 12px 0;
+    font-weight: 400;
+    font-size: 14px;
+  }
+
+  /* Add this to define actual shift colors */
+.shift-color-1 { background-color: #f44336; color: white; }
+.shift-color-2 { background-color: #2196f3; color: white; }
+.shift-color-3 { background-color: #4caf50; color: white; }
+.shift-color-4 { background-color: #ff9800; color: white; }
+.shift-color-5 { background-color: #9c27b0; color: white; }
+.shift-color-6 { background-color: #00bcd4; color: white; }
+.shift-color-7 { background-color: #FF0000; color: white; }
+.shift-color-8 { background-color: #ADD8E6; color: white; }
+.shift-color-9 { background-color: #FFDE21; color: white; }
+.shift-color-10 { background-color: #6699CC; color: white; }
+.shift-color-11 { background-color: #F4C2C2; color: white; }
+
+  @media (max-width: 900px) {
+    main {
+      flex-direction: column;
+    }
+    .sidebar {
+      flex: none;
+      height: 300px;
+      border-right: none;
+      border-bottom: 1px solid #ddd;
+    }
+    .main-content {
+      height: 400px;
+      padding: 0.5rem;
+    }
+  }
+
+  /* Style for statistics panel */
+  #statisticsPanel {
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    background-color: #fafafa;
+    border-radius: 8px;
+    padding: 10px;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  #statisticsPanel h3 {
+    margin: 0 0 8px 0;
+    color: #0077ff;
+    user-select: none;
+  }
+  #statisticsContent {
+    font-size: 14px;
+    color: #333;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+   #statisticsContent th {
+    font-size: 7px;
+  }
+   #statisticsContent tr td{
+    font-size: 12px;
+  }
+  .stat-box {
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 10px;
+    flex: 1 1 150px;
+    box-shadow: 1px 1px 8px rgba(0,0,0,0.05);
+  }
+  .stat-box h4 {
+    margin: 0 0 6px 0;
+    font-weight: 600;
+    color: #0077ff;
+  }
+  .stat-box p {
+    margin: 0;
+    font-weight: 700;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+  <header>Globar Delivery Department Attendance Management</header>
+  <main>
+    <section class="sidebar" aria-label="Sidebar with employee list and palettes">
+      <div class="employee-header">
+        <h3>Employees</h3>
+        <form id="addEmployeeForm" aria-label="Add new employee">
+          <input type="text" id="newEmployeeName" placeholder="New Employee Name" aria-label="New Employee Name" required autocomplete="off" />
+          <button id="addEmployeeBtn" type="submit" aria-label="Add Employee">Add</button>
+        </form>
+      </div>
+      <ul id="employeeList" tabindex="0" aria-multiselectable="false" role="listbox"></ul>
+      
+      <div class="palette-container" aria-label="Shift colors palette">
+        <h3>Shifts</h3>
+        <div id="shiftPalette" aria-live="polite" role="list"></div>
+        <form id="addShiftForm" class="add-item-form" aria-label="Add a new shift">
+          <input type="text" id="newShiftName" placeholder="New Shift Name" aria-label="New Shift Name" required />
+          <button type="submit" aria-label="Add shift">Add</button>
+        </form>
+      </div>
+
+      <div class="palette-container" aria-label="Attendance types palette">
+        <h3>Attendance Types</h3>
+        <div id="attendancePalette" aria-live="polite" role="list"></div>
+        <form id="addAttendanceForm" class="add-item-form" aria-label="Add a new attendance type">
+          <input type="text" id="newAttendanceName" placeholder="New Attendance Type" aria-label="New Attendance Type" required />
+          <button type="submit" aria-label="Add attendance type">Add</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="main-content" aria-label="Schedule and attendance section">
+      <div class="week-picker-container">
+        <label for="weekPicker">Select Week Starting Monday: </label>
+        <input type="date" id="weekPicker" aria-label="Select week start date" />
+      </div>
+      <div class="export-btn-container">
+        <button id="exportExcelBtn" aria-label="Export attendance data to Excel">Export to Excel</button>
+      </div>
+      <div class="schedule" aria-label="Schedule table container">
+        <table role="grid" id="scheduleTable" aria-readonly="true" aria-multiselectable="false" tabindex="0">
+          <thead>
+            <tr><th scope="col">Employee</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div id="statisticsPanel" aria-live="polite" aria-atomic="true" aria-label="Attendance statistics summary">
+        <h3>Attendance Statistics for Selected Week</h3>
+        <div id="statisticsContent"></div>
+      </div>
+    </section>
+  </main>
+  <footer>&copy; 2025 Vince Masipag System</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+  (() => {
+    'use strict';
+
+    const STORAGE_EMPLOYEES_KEY = 'dynamicEmployees';
+    const STORAGE_KEY = 'attendanceScheduleData';
+    const STORAGE_SHIFTS_KEY = 'attendanceShifts';
+    const STORAGE_ATTENDANCE_TYPES_KEY = 'attendanceTypes';
+    const STORAGE_WEEK_START_KEY = 'weekStartMonday';
+
+    const defaultEmployees = [
+      { id: 1, name: "BARTOLOME, Rhodnee Roy" },
+      { id: 2, name: "BENEMERITO, Paulo" },
+      { id: 3, name: "BORSOTO, Madelene" },
+      { id: 4, name: "BOSQUE, Lorgem" },
+      { id: 5, name: "CABALLERO, Suzette" },
+      { id: 6, name: "CABILLO, Vince Joseph" },
+      { id: 7, name: "DALMACIO, Trisha Nadine" },
+      { id: 8, name: "DE CELLO, Judymae Eliora" },
+      { id: 9, name: "DUARTE, Mary Jane" },
+      { id: 10, name: "EPE, Hannah" },
+      { id: 11, name: "ESTELA, Janry" },
+      { id: 12, name: "GONZALEZ, Rose Ann" },
+      { id: 13, name: "GURANGO, Airris Jane" },
+      { id: 14, name: "GURAY, March Jovan" },
+      { id: 15, name: "HINOGUIN, Shermaine" },
+      { id: 16, name: "JOPILLO, Juan Paolo" },
+      { id: 17, name: "JUMALON, Robine Cole" },
+      { id: 18, name: "MALQUISTO, Lorje" },
+      { id: 19, name: "MANDAWE, Jonard" },
+      { id: 20, name: "MONCEDA, Joselito" },
+      { id: 21, name: "PEJANA, Joana Mae" },
+      { id: 22, name: "PINO, Jana Lency" },
+      { id: 23, name: "PUNZALAN, Vanessa" },
+      { id: 24, name: "QUEQUEGAN, Rica Anne" },
+      { id: 25, name: "QUINIÑEZA, Arjoy" },
+      { id: 26, name: "REGALA, Ed Martell" },
+      { id: 27, name: "ROGADOR, Janin" },
+      { id: 28, name: "SANTIAGO, Senden Claire" },
+      { id: 29, name: "SISON, Jhoanne Stephanie" },
+      { id: 30, name: "TOQUERO, Christy" },
+      { id: 31, name: "YNCIERTO, Francis Jefferson" },
+      { id: 32, name: "YUMUL, Therese Nicole" }
+    ];
+
+    let defaultShifts = [
+      { id: 1, name: "Morning 10:00", colorClass: "shift-color-1" },
+      { id: 2, name: "Morning 12:00", colorClass: "shift-color-1" },
+      { id: 3, name: "Mid-shift 2:30", colorClass: "shift-color-2" },
+      { id: 4, name: "Mid-shift 3:30", colorClass: "shift-color-2" },
+      { id: 5, name: "Late-shift 4:30", colorClass: "shift-color-4" },
+      { id: 6, name: "Late-shift 5:30", colorClass: "shift-color-4" },
+      { id: 7, name: "Night-shift 9:00", colorClass: "shift-color-3" },
+      { id: 8, name: "Night-shift 10:00", colorClass: "shift-color-3" },
+      { id: 9, name: "Night-shift 11:00", colorClass: "shift-color-3" }
+    ];
+
+    let defaultAttendanceTypes = [
+      { id: 1, name: "Present - Onsite", code: "POS", colorClass: "shift-color-3" },
+      { id: 2, name: "Present - WFH", code: "PWFH", colorClass: "shift-color-6" },
+      { id: 3, name: "Absent", code: "A", colorClass: "shift-color-1" },
+      { id: 4, name: "Day Off", code: "O", colorClass: "shift-color-5" },
+      { id: 5, name: "Late Offset", code: "LO", colorClass: "shift-color-4" },
+      { id: 6, name: "Late Deduct", code: "LD", colorClass: "shift-color-2" },
+      { id: 7, name: "NPL", code: "NPL", colorClass: "shift-color-7" },
+      { id: 8, name: "AM NPL", code: "AM NPL", colorClass: "shift-color-7" },
+      { id: 9, name: "PM NPL", code: "PM NPL", colorClass: "shift-color-7" },
+      { id: 10, name: "Vacation Leave", code: "VL", colorClass: "shift-color-8" },
+      { id: 11, name: "AM Vacation Leave", code: "AM VL", colorClass: "shift-color-8" },
+      { id: 12, name: "PM Vacation Leave", code: "PM VL", colorClass: "shift-color-8" },
+      { id: 13, name: "Sick Leave", code: "SL", colorClass: "shift-color-9" },
+      { id: 14, name: "AM Sick Leave", code: "AM SL", colorClass: "shift-color-9" },
+      { id: 15, name: "PM Sick Leave", code: "PM SL", colorClass: "shift-color-9" },
+      { id: 16, name: "Emergency Leave", code: "EL", colorClass: "shift-color-10" },
+      { id: 17, name: "AM Emergency Leave", code: "AM EL", colorClass: "shift-color-10" },
+      { id: 18, name: "PM Emergency Leave", code: "PM EL", colorClass: "shift-color-10" },
+      { id: 19, name: "Maternity Leave", code: "ML", colorClass: "shift-color-7" },
+      { id: 20, name: "Birthday Leave", code: "ML", colorClass: "shift-color-11" }
+
+    ];
+
+    let daysCount = 7;
+    let days = [];
+
+    function getMonday(date) {
+      date = new Date(date);
+      let day = date.getDay();
+      let diff = date.getDate() - day + (day === 0 ? -6 : 1);
+      return new Date(date.setDate(diff));
+    }
+
+    function formatDayHeading(date) {
+      const options = { weekday: 'short', month: '2-digit', day: '2-digit' };
+      return date.toLocaleDateString(undefined, options);
+    }
+
+    function formatDateExcel(date) {
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      const yyyy = date.getFullYear();
+      return `${mm}/${dd}/${yyyy}`;
+    }
+
+    // Initialize global state
+    let employees, shifts, attendanceTypes, scheduleData;
+
+    // Load data or defaults
+    function loadData() {
+      let raw;
+
+      raw = localStorage.getItem(STORAGE_EMPLOYEES_KEY);
+      employees = raw ? JSON.parse(raw) : [...defaultEmployees];
+
+      raw = localStorage.getItem(STORAGE_SHIFTS_KEY);
+      shifts = raw ? JSON.parse(raw) : [...defaultShifts];
+
+      raw = localStorage.getItem(STORAGE_ATTENDANCE_TYPES_KEY);
+      attendanceTypes = raw ? JSON.parse(raw) : [...defaultAttendanceTypes];
+
+      raw = localStorage.getItem(STORAGE_KEY);
+      scheduleData = raw ? JSON.parse(raw) : {};
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_EMPLOYEES_KEY, JSON.stringify(employees));
+      localStorage.setItem(STORAGE_SHIFTS_KEY, JSON.stringify(shifts));
+      localStorage.setItem(STORAGE_ATTENDANCE_TYPES_KEY, JSON.stringify(attendanceTypes));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(scheduleData));
+    }
+
+    // DOM Reference
+    const employeeListEl = document.getElementById('employeeList');
+    const shiftPaletteEl = document.getElementById('shiftPalette');
+    const attendancePaletteEl = document.getElementById('attendancePalette');
+    const scheduleTableEl = document.getElementById('scheduleTable');
+    const weekPickerEl = document.getElementById('weekPicker');
+    const exportExcelBtn = document.getElementById('exportExcelBtn');
+    const statisticsContentEl = document.getElementById('statisticsContent');
+    const addEmployeeFormEl = document.getElementById('addEmployeeForm');
+    const newEmployeeNameEl = document.getElementById('newEmployeeName');
+    const addShiftFormEl = document.getElementById('addShiftForm');
+    const newShiftNameEl = document.getElementById('newShiftName');
+    const addAttendanceFormEl = document.getElementById('addAttendanceForm');
+    const newAttendanceNameEl = document.getElementById('newAttendanceName');
+
+    let selectedEmployeeId = null;
+    let selectedPaletteShiftId = null;
+    let selectedPaletteAttendanceId = null;
+
+    // Generate days array based on week start
+    function generateDays(startDate) {
+      let result = [];
+      for (let i = 0; i < daysCount; i++) {
+        let d = new Date(startDate);
+        d.setDate(d.getDate() + i);
+        result.push(d);
+      }
+      return result;
+    }
+
+    // Render employee list with selection and remove buttons
+    function renderEmployeeList() {
+      employeeListEl.innerHTML = '';
+      employees.forEach(emp => {
+        const li = document.createElement('li');
+        li.textContent = emp.name;
+        li.tabIndex = 0;
+        li.setAttribute('role', 'option');
+        if (emp.id === selectedEmployeeId) li.classList.add('selected');
+        li.addEventListener('click', () => {
+          selectedEmployeeId = emp.id;
+          renderEmployeeList();
+          renderScheduleTable();
+          updateStatistics();
+        });
+        li.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            li.click();
+          }
+        });
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'remove-btn';
+        removeBtn.textContent = '×';
+        removeBtn.title = 'Remove Employee';
+        removeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          removeEmployee(emp.id);
+        });
+        li.appendChild(removeBtn);
+        employeeListEl.appendChild(li);
+      });
+      if (selectedEmployeeId === null && employees.length > 0) {
+        selectedEmployeeId = employees[0].id;
+      }
+    }
+
+    function removeEmployee(id) {
+      employees = employees.filter(e => e.id !== id);
+      if (selectedEmployeeId === id) selectedEmployeeId = employees.length > 0 ? employees[0].id : null;
+      delete scheduleData[id];
+      saveData();
+      renderEmployeeList();
+      renderScheduleTable();
+      updateStatistics();
+    }
+
+    // Render shift palette
+    function renderShiftPalette() {
+      shiftPaletteEl.innerHTML = '';
+      shifts.forEach(shift => {
+        const div = document.createElement('div');
+        div.className = 'color-item';
+        if (shift.id === selectedPaletteShiftId) div.classList.add('selected');
+        div.tabIndex = 0;
+        div.setAttribute('role', 'listitem');
+        div.title = shift.name;
+        const colorBox = document.createElement('div');
+        colorBox.className = 'color-box ' + shift.colorClass;
+        div.appendChild(colorBox);
+        const label = document.createElement('span');
+        label.textContent = shift.name;
+        div.appendChild(label);
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'palette-remove-btn';
+        removeBtn.textContent = '×';
+        removeBtn.title = 'Remove Shift';
+        removeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          removeShift(shift.id);
+        });
+        div.appendChild(removeBtn);
+        div.addEventListener('click', () => {
+          selectedPaletteShiftId = shift.id === selectedPaletteShiftId ? null : shift.id;
+          renderShiftPalette();
+        });
+        div.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            div.click();
+          }
+        });
+        shiftPaletteEl.appendChild(div);
+      });
+      if (selectedPaletteShiftId === null && shifts.length > 0) {
+        selectedPaletteShiftId = shifts[0].id;
+      }
+    }
+
+    // Render attendance palette
+    function renderAttendancePalette() {
+      attendancePaletteEl.innerHTML = '';
+      attendanceTypes.forEach(type => {
+        const div = document.createElement('div');
+        div.className = 'color-item';
+        if (type.id === selectedPaletteAttendanceId) div.classList.add('selected');
+        div.tabIndex = 0;
+        div.setAttribute('role', 'listitem');
+        div.title = type.name;
+        const colorBox = document.createElement('div');
+        colorBox.className = 'color-box ' + type.colorClass;
+        div.appendChild(colorBox);
+        const label = document.createElement('span');
+        label.textContent = type.name;
+        div.appendChild(label);
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'palette-remove-btn';
+        removeBtn.textContent = '×';
+        removeBtn.title = 'Remove Attendance Type';
+        removeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          removeAttendanceType(type.id);
+        });
+        div.appendChild(removeBtn);
+        div.addEventListener('click', () => {
+          selectedPaletteAttendanceId = type.id === selectedPaletteAttendanceId ? null : type.id;
+          renderAttendancePalette();
+        });
+        div.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            div.click();
+          }
+        });
+        attendancePaletteEl.appendChild(div);
+      });
+      if (selectedPaletteAttendanceId === null && attendanceTypes.length > 0) {
+        selectedPaletteAttendanceId = attendanceTypes[0].id;
+      }
+    }
+
+    function removeShift(id) {
+      shifts = shifts.filter(s => s.id !== id);
+      for (const empId in scheduleData) {
+        for (const dayKey in scheduleData[empId]) {
+          if (scheduleData[empId][dayKey].shiftId === id) {
+            delete scheduleData[empId][dayKey].shiftId;
+            if (Object.keys(scheduleData[empId][dayKey]).length === 0) {
+              delete scheduleData[empId][dayKey];
+            }
+          }
+        }
+      }
+      if (selectedPaletteShiftId === id) selectedPaletteShiftId = null;
+      saveData();
+      renderShiftPalette();
+      renderScheduleTable();
+      updateStatistics();
+    }
+
+    function removeAttendanceType(id) {
+      attendanceTypes = attendanceTypes.filter(a => a.id !== id);
+      for (const empId in scheduleData) {
+        for (const dayKey in scheduleData[empId]) {
+          if (scheduleData[empId][dayKey].attendanceId === id) {
+            delete scheduleData[empId][dayKey].attendanceId;
+            if (Object.keys(scheduleData[empId][dayKey]).length === 0) {
+              delete scheduleData[empId][dayKey];
+            }
+          }
+        }
+      }
+      if (selectedPaletteAttendanceId === id) selectedPaletteAttendanceId = null;
+      saveData();
+      renderAttendancePalette();
+      renderScheduleTable();
+      updateStatistics();
+    }
+
+    function renderScheduleTable() {
+    if (!weekPickerEl.value) {
+        const monday = getMonday(new Date());
+        days = generateDays(monday);
+        weekPickerEl.value = monday.toISOString().slice(0, 10);
+    } else {
+        days = generateDays(new Date(weekPickerEl.value));
+    }
+
+    const thead = scheduleTableEl.querySelector('thead');
+    thead.innerHTML = '';
+    const headerRow = document.createElement('tr');
+    const empTh = document.createElement('th');
+    empTh.textContent = 'Employee';
+    empTh.scope = 'col';
+    headerRow.appendChild(empTh);
+
+    days.forEach(day => {
+        const th = document.createElement('th');
+        th.scope = 'col';
+        th.textContent = formatDayHeading(day);
+        headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+
+    const tbody = scheduleTableEl.querySelector('tbody');
+    tbody.innerHTML = '';
+    employees.forEach(emp => {
+        const tr = document.createElement('tr');
+        const nameTd = document.createElement('td');
+        nameTd.textContent = emp.name;
+        tr.appendChild(nameTd);
+
+        days.forEach(day => {
+            const td = document.createElement('td');
+            td.className = 'shift-cell';
+            const dayKey = day.toISOString().slice(0, 10);
+            if (scheduleData[emp.id] && scheduleData[emp.id][dayKey]) {
+                const obj = scheduleData[emp.id][dayKey];
+                let cellText = '';
+                if (obj.shiftId) {
+                    const sh = shifts.find(s => s.id === obj.shiftId);
+                    if (sh) {
+                        cellText += sh.name;
+                    }
+                }
+                if (obj.attendanceId) {
+                    const at = attendanceTypes.find(a => a.id === obj.attendanceId);
+                    if (at) {
+                        if (cellText !== '') cellText += ' (';
+                        cellText += at.name;
+                        if (cellText.includes('(')) cellText += ')';
+                    }
+                }
+                td.textContent = cellText;
+
+                if (obj.shiftId) {
+                    const sh = shifts.find(s => s.id === obj.shiftId);
+                    if (sh) td.classList.add(sh.colorClass);
+                }
+                if (obj.attendanceId) {
+                    const at = attendanceTypes.find(a => a.id === obj.attendanceId);
+                    if (at) td.classList.add(at.colorClass);
+                }
+            }
+
+            // Modify the click event to allow changing the cell value
+            td.addEventListener('click', () => {
+                if (selectedEmployeeId !== emp.id) {
+                    selectedEmployeeId = emp.id;
+                    renderEmployeeList();
+                }
+                // Change the cell schedule to the latest selected shift or attendance type
+                changeCellSchedule(emp.id, dayKey); // Call the function to change the cell schedule
+                updateStatistics(); // Update statistics after change
+            });
+
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+}
+
+
+    function changeCellSchedule(empId, dayKey) {
+      if (!scheduleData[empId]) scheduleData[empId] = {};
+      if (!scheduleData[empId][dayKey]) scheduleData[empId][dayKey] = {};
+
+      if (selectedPaletteShiftId !== null) {
+        if (scheduleData[empId][dayKey].shiftId === selectedPaletteShiftId) {
+          delete scheduleData[empId][dayKey].shiftId;
+        } else {
+          scheduleData[empId][dayKey].shiftId = selectedPaletteShiftId;
+        }
+      }
+
+      if (selectedPaletteAttendanceId !== null) {
+        if (scheduleData[empId][dayKey].attendanceId === selectedPaletteAttendanceId) {
+          delete scheduleData[empId][dayKey].attendanceId;
+        } else {
+          scheduleData[empId][dayKey].attendanceId = selectedPaletteAttendanceId;
+        }
+      }
+
+      if (Object.keys(scheduleData[empId][dayKey]).length === 0) {
+        delete scheduleData[empId][dayKey];
+      }
+
+      saveData();
+      renderScheduleTable();
+      updateStatistics();
+    }
+
+    addEmployeeFormEl.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = newEmployeeNameEl.value.trim();
+      if (!name) return;
+      const newId = employees.length > 0 ? Math.max(...employees.map(e => e.id)) + 1 : 1;
+      employees.push({id: newId, name});
+      newEmployeeNameEl.value = '';
+      saveData();
+      renderEmployeeList();
+      renderScheduleTable();
+      updateStatistics();
+    });
+
+    addShiftFormEl.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = newShiftNameEl.value.trim();
+      if (!name) return;
+      const newId = shifts.length > 0 ? Math.max(...shifts.map(s => s.id)) + 1 : 1;
+      const colorClasses = ['shift-color-1','shift-color-2','shift-color-3','shift-color-4','shift-color-5','shift-color-6'];
+      let usedColors = shifts.map(s => s.colorClass);
+      for (let cc of colorClasses) {
+        if (!usedColors.includes(cc)) {
+          shifts.push({id: newId, name, colorClass: cc});
+          break;
+        }
+      }
+      if (!shifts.find(s => s.id === newId)) {
+        shifts.push({id: newId, name, colorClass: 'shift-color-6'});
+      }
+      newShiftNameEl.value = '';
+      saveData();
+      renderShiftPalette();
+      renderScheduleTable();
+      updateStatistics();
+    });
+
+    addAttendanceFormEl.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = newAttendanceNameEl.value.trim();
+      if (!name) return;
+      const newId = attendanceTypes.length > 0 ? Math.max(...attendanceTypes.map(a => a.id)) + 1 : 1;
+      const colorClasses = ['shift-color-1','shift-color-2','shift-color-3','shift-color-4','shift-color-5','shift-color-6'];
+      let usedColors = attendanceTypes.map(a => a.colorClass);
+      for (let cc of colorClasses) {
+        if (!usedColors.includes(cc)) {
+          attendanceTypes.push({id: newId, name, code: name[0].toUpperCase(), colorClass: cc});
+          break;
+        }
+      }
+      if (!attendanceTypes.find(a => a.id === newId)) {
+        attendanceTypes.push({id: newId, name, code: name[0].toUpperCase(), colorClass: 'shift-color-6'});
+      }
+      newAttendanceNameEl.value = '';
+      saveData();
+      renderAttendancePalette();
+      renderScheduleTable();
+      updateStatistics();
+    });
+
+    weekPickerEl.addEventListener('change', () => {
+      renderScheduleTable();
+      updateStatistics();
+      localStorage.setItem(STORAGE_WEEK_START_KEY, weekPickerEl.value);
+    });
+
+exportExcelBtn.addEventListener('click', () => {
+  const schedulePayload = [];
+
+  employees.forEach(emp => {
+    const empData = scheduleData[emp.id];
+    if (!empData) return;
+
+    for (const dayKey in empData) {
+      const info = empData[dayKey];
+      schedulePayload.push({
+        date: dayKey,
+        employeeId: emp.id,
+        shiftId: info.shiftId || '',
+        attendanceTypeId: info.attendanceId || ''
+      });
+    }
+  });
+
+fetch("https://script.google.com/macros/s/AKfycbwXu7SI3wMOxwabOWR-X-NfX1hscSaDQ5QL1olTvaAu7YrMfIwyDaF1FONopZ6Ngqc/exec", {
+  method: "POST",
+  mode: "cors",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify(schedulePayload)
+})
+.then(res => res.json())
+.then(data => {
+  console.log("Saved to Google Sheets:", data);
+  alert("Saved successfully!");
+})
+.catch(err => {
+  console.error("Error saving to Google Sheets:", err);
+});
+
+
+});
+
+    function updateStatistics() {
+      if (!weekPickerEl.value) return;
+      days = generateDays(new Date(weekPickerEl.value));
+
+      const weeklySummary = {};
+      attendanceTypes.forEach(at => {
+        weeklySummary[at.id] = 0;
+      });
+
+      const dailySummary = [];
+      for(let i=0; i<days.length; i++) {
+        const dayStats = {};
+        attendanceTypes.forEach(at => {
+          dayStats[at.id] = 0;
+        });
+        dailySummary.push(dayStats);
+      }
+
+      employees.forEach(emp => {
+        for(let i=0; i<days.length; i++) {
+          const day = days[i];
+          const dayKey = day.toISOString().slice(0,10);
+          if (scheduleData[emp.id] && scheduleData[emp.id][dayKey]) {
+            const attId = scheduleData[emp.id][dayKey].attendanceId;
+            if(attId && weeklySummary.hasOwnProperty(attId)) {
+              weeklySummary[attId]++;
+              dailySummary[i][attId]++;
+            }
+          }
+        }
+      });
+
+      let html = '';
+
+      html += '<div class="stat-box"><h4>Weekly Summary</h4>';
+      attendanceTypes.forEach(at => {
+        html += `<p>${at.name}: ${weeklySummary[at.id]}</p>`;
+      });
+      html += '</div>';
+
+      html += '<div class="stat-box" style="flex: 2 1 400px; overflow-x:auto;">';
+      html += '<h4>Daily Summary</h4>';
+      html += '<table style="border-collapse: collapse; width: 100%; font-size: 12px;"><thead><tr>';
+      html += '<th style="border:1px solid #ccc;padding:4px;">Day</th>';
+      attendanceTypes.forEach(at => {
+        html += `<th style="border:1px solid #ccc;padding:4px;">${at.name}</th>`;
+      });
+      html += '</tr></thead><tbody>';
+      for(let i=0; i<days.length; i++) {
+        const dayStr = days[i].toLocaleDateString(undefined, { weekday: 'short', month: '2-digit', day: '2-digit' });
+        html += `<tr><td style="border:1px solid #ccc;padding:4px;">${dayStr}</td>`;
+        attendanceTypes.forEach(at => {
+          html += `<td style="border:1px solid #ccc;padding:4px;text-align:center;">${dailySummary[i][at.id]}</td>`;
+        });
+        html += '</tr>';
+      }
+      html += '</tbody></table></div>';
+
+      statisticsContentEl.innerHTML = html;
+    }
+
+    function init() {
+      loadData();
+      let savedMonday = localStorage.getItem(STORAGE_WEEK_START_KEY);
+      if (savedMonday) {
+        weekPickerEl.value = savedMonday;
+      } else {
+        const monday = getMonday(new Date());
+        weekPickerEl.value = monday.toISOString().slice(0,10);
+        localStorage.setItem(STORAGE_WEEK_START_KEY, weekPickerEl.value);
+      }
+      renderEmployeeList();
+      renderShiftPalette();
+      renderAttendancePalette();
+      renderScheduleTable();
+      updateStatistics();
+      weekPickerEl.addEventListener('change', () => {
+        localStorage.setItem(STORAGE_WEEK_START_KEY, weekPickerEl.value);
+      });
+    }
+    init();
+  })();
+  </script>
+</body>
+</html>
+
